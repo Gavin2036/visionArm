@@ -31,6 +31,10 @@ count = 0
 #  [ 23.77720599]]
 
 
+[[-0.04095331 ,-0.73971507 ,-1.0766663 ],
+[-0.73974897 , 0.0292468 , -0.11817955],
+[-0.00190573,  0.00287056  ,0.08835329]]
+[[-70.59927052],[103.61591798],[46.13823107]]
 
 
 
@@ -162,6 +166,10 @@ def handle_request(conn):
                     rotation,translation = CameraToArm_Affine_Transformation(data1)
                     print(rotation,translation)
                 if command == '3':
+                    rotation = [[-0.04095331 ,-0.73971507 ,-1.0766663 ],
+                    [-0.73974897 , 0.0292468 , -0.11817955],
+                    [-0.00190573,  0.00287056  ,0.08835329]]
+                    translation = [[-70.59927052],[103.61591798],[46.13823107]]
                     # rotation =  [[ 1.20579102e-02 ,-7.36993647e-01, 4.42460274e+00],
                     # [-7.46837788e-01 , 1.53891244e-02 ,-2.19670624e+00],
                     # [ 4.50816195e-04 , 4.13577669e-03 , 1.16035733e-01]]
@@ -189,7 +197,6 @@ def handle_request(conn):
                     
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0) , new_Redcoordinates.item(1), 40 , 0, isQueued = 1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0) , new_Redcoordinates.item(1), new_Redcoordinates.item(2) , 0, isQueued = 1)
-
                     dType.SetEndEffectorSuctionCup(api, 1,1,isQueued = 1)
                     dType.SetWAITCmd(api, 1, isQueued=1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0) , new_Redcoordinates.item(1), 40 , Diff_Red, isQueued = 1)      
@@ -197,12 +204,10 @@ def handle_request(conn):
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Leftcoordinates.item(0), new_Leftcoordinates.item(1), new_Leftcoordinates.item(2)+10, Diff_Red, isQueued = 1)
                     dType.SetEndEffectorSuctionCup(api, 1,0,isQueued = 1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Leftcoordinates.item(0), new_Leftcoordinates.item(1), 40, 0, isQueued = 1)
-                    # dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, 200, 200, 50, 0, isQueued = 1)
 
-
+                    print(1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0) , new_Pinkcoordinates.item(1), 40 , 0, isQueued = 1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0) , new_Pinkcoordinates.item(1), new_Pinkcoordinates.item(2) , 0, isQueued = 1)
-
                     dType.SetEndEffectorSuctionCup(api, 1,1,isQueued = 1)
                     dType.SetWAITCmd(api, 1, isQueued=1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0) , new_Pinkcoordinates.item(1), 40 , Diff_Pink, isQueued = 1)      
@@ -210,15 +215,51 @@ def handle_request(conn):
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Rightcoordinates.item(0), new_Rightcoordinates.item(1), new_Rightcoordinates.item(2)+10, Diff_Pink, isQueued = 1)
                     dType.SetEndEffectorSuctionCup(api, 1,0,isQueued = 1)
                     dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Rightcoordinates.item(0), new_Rightcoordinates.item(1), 40, 0, isQueued = 1)
+ 
+                    # dType.SetHOMECmd(api, temp = 0, isQueued = 1)
+                    lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, 150, 0, -10, 0, isQueued = 1)[0] 
+                    dType.SetQueuedCmdStartExec(api)
+                    print(2)
+                    while lastIndex > dType.GetQueuedCmdCurrentIndex(api)[0]:
+                        dType.dSleep(100)
+                    dType.SetQueuedCmdStopExec(api)
+                    dType.SetQueuedCmdClear(api)
+                  
+                    print(3)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Leftcoordinates.item(0) , new_Leftcoordinates.item(1), 40 , 0, isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Leftcoordinates.item(0) , new_Leftcoordinates.item(1), new_Leftcoordinates.item(2) +5 , 0, isQueued = 1)
+                    dType.SetEndEffectorSuctionCup(api, 1,1,isQueued = 1)
+                    dType.SetWAITCmd(api, 1, isQueued=1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Leftcoordinates.item(0) , new_Leftcoordinates.item(1), 40 , 0, isQueued = 1)      
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0), new_Redcoordinates.item(1), 40, -Diff_Red, isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0), new_Redcoordinates.item(1), new_Redcoordinates.item(2), -Diff_Red, isQueued = 1)
+                    dType.SetEndEffectorSuctionCup(api, 1,0,isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Redcoordinates.item(0), new_Redcoordinates.item(1), 40, 0, isQueued = 1)
+
+                    print(4)
+
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Rightcoordinates.item(0) , new_Rightcoordinates.item(1), 40 , 0, isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Rightcoordinates.item(0) , new_Rightcoordinates.item(1), new_Rightcoordinates.item(2) +5 , 0, isQueued = 1)
+                    dType.SetEndEffectorSuctionCup(api, 1,1,isQueued = 1)
+                    dType.SetWAITCmd(api, 1, isQueued=1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Rightcoordinates.item(0) , new_Rightcoordinates.item(1), 40 , 0, isQueued = 1)      
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0), new_Pinkcoordinates.item(1), 40, -Diff_Pink, isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0), new_Pinkcoordinates.item(1), new_Pinkcoordinates.item(2),- Diff_Pink, isQueued = 1)
+                    dType.SetEndEffectorSuctionCup(api, 1,0,isQueued = 1)
+                    dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, new_Pinkcoordinates.item(0), new_Pinkcoordinates.item(1), 40, 0, isQueued = 1)
+
+                    print(5)
+
                     dType.SetHOMECmd(api, temp = 0, isQueued = 1)
                     lastIndex = dType.SetPTPCmd(api, dType.PTPMode.PTPMOVLXYZMode, 150, 0, -10, 0, isQueued = 1)[0]
 
 
                     dType.SetQueuedCmdStartExec(api)
-                    
                     while lastIndex > dType.GetQueuedCmdCurrentIndex(api)[0]:
                         dType.dSleep(100)
                     dType.SetQueuedCmdStopExec(api)
+                    dType.SetQueuedCmdClear(api)
+
                     # dType.DisconnectDobot(api)
 
 

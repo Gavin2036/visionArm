@@ -304,7 +304,7 @@ extern "C"
                         continue;
                     }
 
-                    float fThickness = 0.02f;
+                    float fThickness = 0.04;
           
                     float dis = distance_to_plane_signed(pointcloud[iii], pointcloud[iii+1], pointcloud[iii+2], A, B, C);
                     if (fabs(dis) < fThickness)
@@ -342,7 +342,7 @@ extern "C"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
-            Erosion(depthBinary, depthBinary, 5);
+            Erosion(depthBinary, depthBinary, 8);
             
             // find contours of the planes
             cv::findContours(depthBinary, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
@@ -373,25 +373,16 @@ extern "C"
                 planeCenterLeft.clear();
                 planeCenterRight.clear();
                 planeAngleLeft.clear();
-                planeAngleRight.clear(); 
+                planeAngleRight.clear();                
                 // drawContours(depthColor, contours, 0, Scalar(255, 255, 0), 2, 8 );
                 for (int idx = 0; idx < contours.size(); idx++)
                 {   
                     double area = cv::contourArea(contours[idx]);
                     int father = hierarchy[idx][3];
                     int son = hierarchy[idx][2];
-                    double fatherArea;
-                    double sonArea;
+                    int grandpa = hierarchy[father][3];
                     
                     approxPolyDP( Mat(contours[idx]), contours_poly[idx], 5, true );                  
-                    if (father != -1)
-                    {
-                        fatherArea = cv::contourArea(contours[father]);
-                    }
-                    if (son != -1)
-                    {
-                        sonArea = cv::contourArea(contours[son]);
-                    } 
 
                     if (father == -1)
                     {
@@ -444,53 +435,56 @@ extern "C"
                         }
                     }
 
-                    else if (son != -1 && father != -1)
+                    else if ( father != -1)
                     {
-                        if ( sonArea > areaLowerBound && sonArea < areaUpperBound )
+                        if (grandpa != -1)
                         {
-                            // only draw the contours of plane with enough area
-                            rectPoint = minAreaRect( Mat(contours[son]) );
-                            float planeAngle = rectPoint.angle;
-                            if (rectPoint.size.width < rectPoint.size.height)
-                                planeAngle = planeAngle - 90;                           
-                            Point2f fourPoint2f[4];
-                            rectPoint.points( fourPoint2f );
-                            vector<Point2f> points;
-                            points.push_back(fourPoint2f[0]);
-                            points.push_back(fourPoint2f[1]);
-                            points.push_back(fourPoint2f[2]);
-                            points.push_back(fourPoint2f[3]);
-                            double rectArea = cv::contourArea(points);
-                            double ratio = sonArea / rectArea;  
-                            if (ratio > ratioLimit)
+                            if ( area > areaLowerBound && area < areaUpperBound )
                             {
-                                line(depthColor, fourPoint2f[0], fourPoint2f[1], Scalar(255, 255, 255), 3 );
-                                line(depthColor, fourPoint2f[1], fourPoint2f[2], Scalar(255, 255, 255), 3 );
-                                line(depthColor, fourPoint2f[2], fourPoint2f[3], Scalar(255, 255, 255), 3 );
-                                line(depthColor, fourPoint2f[0], fourPoint2f[3], Scalar(255, 255, 255), 3 );
-
-                                // take the center point as target point
-                                int x = (fourPoint2f[0].x + fourPoint2f[2].x)/2;
-                                int y = (fourPoint2f[0].y + fourPoint2f[2].y)/2;
-                                planeCenter[0] = pointcloud[3*(y*width + x)]*1000;
-                                planeCenter[1] = pointcloud[3*(y*width + x)+1]*1000;
-                                planeCenter[2] = pointcloud[3*(y*width + x)+2]*100;
-                                if (x > 320)
-                                {   
-                                    planeCenterRight.push_back(planeCenter[0]);
-                                    planeCenterRight.push_back(planeCenter[1]);
-                                    planeCenterRight.push_back(planeCenter[2]);
-                                    circle(depthColor, Point(x,y), 2, Scalar(0, 255, 0));
-                                    planeAngleRight.push_back(planeAngle);
-                                }
-                                else
+                                // only draw the contours of plane with enough area
+                                rectPoint = minAreaRect( Mat(contours[idx]) );
+                                float planeAngle = rectPoint.angle;
+                                if (rectPoint.size.width < rectPoint.size.height)
+                                    planeAngle = planeAngle - 90;                           
+                                Point2f fourPoint2f[4];
+                                rectPoint.points( fourPoint2f );
+                                vector<Point2f> points;
+                                points.push_back(fourPoint2f[0]);
+                                points.push_back(fourPoint2f[1]);
+                                points.push_back(fourPoint2f[2]);
+                                points.push_back(fourPoint2f[3]);
+                                double rectArea = cv::contourArea(points);
+                                double ratio = area / rectArea;  
+                                if (ratio > ratioLimit)
                                 {
-                                    planeCenterLeft.push_back(planeCenter[0]);
-                                    planeCenterLeft.push_back(planeCenter[1]);
-                                    planeCenterLeft.push_back(planeCenter[2]);                              
-                                    circle(depthColor, Point(x,y), 2, Scalar(0, 0, 255));
-                                    planeAngleLeft.push_back(planeAngle);
-                                }    
+                                    line(depthColor, fourPoint2f[0], fourPoint2f[1], Scalar(255, 255, 255), 3 );
+                                    line(depthColor, fourPoint2f[1], fourPoint2f[2], Scalar(255, 255, 255), 3 );
+                                    line(depthColor, fourPoint2f[2], fourPoint2f[3], Scalar(255, 255, 255), 3 );
+                                    line(depthColor, fourPoint2f[0], fourPoint2f[3], Scalar(255, 255, 255), 3 );
+
+                                    // take the center point as target point
+                                    int x = (fourPoint2f[0].x + fourPoint2f[2].x)/2;
+                                    int y = (fourPoint2f[0].y + fourPoint2f[2].y)/2;
+                                    planeCenter[0] = pointcloud[3*(y*width + x)]*1000;
+                                    planeCenter[1] = pointcloud[3*(y*width + x)+1]*1000;
+                                    planeCenter[2] = pointcloud[3*(y*width + x)+2]*100;
+                                    if (x > 320)
+                                    {   
+                                        planeCenterRight.push_back(planeCenter[0]);
+                                        planeCenterRight.push_back(planeCenter[1]);
+                                        planeCenterRight.push_back(planeCenter[2]);
+                                        circle(depthColor, Point(x,y), 2, Scalar(0, 255, 0));
+                                        planeAngleRight.push_back(planeAngle);
+                                    }
+                                    else
+                                    {
+                                        planeCenterLeft.push_back(planeCenter[0]);
+                                        planeCenterLeft.push_back(planeCenter[1]);
+                                        planeCenterLeft.push_back(planeCenter[2]);                              
+                                        circle(depthColor, Point(x,y), 2, Scalar(0, 0, 255));
+                                        planeAngleLeft.push_back(planeAngle);
+                                    }    
+                                }
                             }
                         }
                     }
